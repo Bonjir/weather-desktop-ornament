@@ -271,6 +271,12 @@ if __name__ == "__main__":
         xpos = 0
         ypos = 45
         temp_str = weather_info["precip"][0]
+        percip = int(float(temp_str) * 100)
+        if percip < 10:
+            temp_str = " {}.0".format(percip)
+        elif percip < 100:
+            temp_str = "{}.0".format(percip)
+        else: temp_str = " {}".format(percip)
         tft.textout((xpos, ypos), temp_str, tft.CYAN, aSize = normal_fontsize)
         xpos += 6 * normal_fontsize[0] * len(temp_str) + 2
         ypos += 8 * normal_fontsize[1] - 8 * small_fontsize[1]
