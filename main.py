@@ -1,6 +1,7 @@
 import network
 import requests
 import utime
+import machine
 import campuswifi
 import logger as log
 import ure as re
@@ -10,13 +11,18 @@ from ST7735 import TFT
 def get_weather_info():
     
     weather_api = "https://api.seniverse.com/v3/weather/daily.json?key=S0KEla3YqL1xzFRwI&location=hefei&language=en&unit=c&start=-1&days=5"
-    try:
-        rq = requests.get(weather_api)
-        info = rq.content.decode()
-        rq.close()
-        log.info("Get weather success.")
-    except:
-        log.error("Get weather failed.")
+    
+    get_weather_info_flag = False
+    while get_weather_info_flag is False:
+        try:
+            rq = requests.get(weather_api)
+            info = rq.content.decode()
+            rq.close()
+            get_weather_info_flag = True
+            log.info("Get weather success.")
+        except Exception as exc:
+            log.error("Get weather failed: {}.".format(exc))
+            utime.sleep(10)
         
     date_pattern = '"date":"(.*?)"'
     text_day_pattern = '"text_day":"(.*?)"'
@@ -192,6 +198,41 @@ def get_weather_info():
         "last_update": last_update\
     }
 
+def calibratetime():
+    time_api = "http://quan.suning.com/getSysTime.do"
+    
+    try:
+        rq = requests.get(time_api)
+        info = rq.content.decode()
+        rq.close()
+    except Exception as exc:
+        raise ValueError("Get time info error: {}".format(exc))
+    
+    try:
+        stdtime_pattern = '"sysTime2":"(.*?)"'
+        stdtime = ''
+        stdtime_start = stdtime_pattern.find('(')
+        for i in range(0, len(info)):
+            info_fromi = info[i:]
+            ret = re.match(stdtime_pattern, info_fromi)
+            if ret != None:
+                stdtime = ret.group(0)[stdtime_start : -1]
+                break
+        y = int(stdtime[0:4])
+        m = int(stdtime[5:7])
+        d = int(stdtime[8:10])
+        h = int(stdtime[11:13])
+        mn= int(stdtime[14:16])
+        s = int(stdtime[17:19])
+        
+        rtc = machine.RTC()
+        rtc.datetime((y, m, d, 1, h, mn, s, 0))
+    except Exception as exc:
+        raise ValueError("Set time error: {}".format(exc))
+    
+    log.info("Set time Success.")
+    return 
+
 def getcurrenttime():
     y, m, d, h, mn, s, _, _ = utime.localtime()
     timestr = "%04d-%02d-%02d %02d:%02d:%02d" % (y, m, d, h, mn, s)
@@ -207,8 +248,12 @@ def init():
 
     try:
         campuswifi.connect(ssid, password, user_name, user_password)
-    except:
-        log.error("Connect to campuswifi failed.")
+    except Exception as exc:
+        log.error("Connect to campuswifi failed: {}.".format(exc))
+    try:
+        calibratetime()
+    except ValueError as ve:
+        log.error("Fail to calibrate time: {}.".format(ve))
         
     spi = SoftSPI(baudrate=800000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3), miso=Pin(10))
     global tft
@@ -286,6 +331,7 @@ if __name__ == "__main__":
         temp_str = "Updated: {}".format(systime)
         tft.textout((xpos, ypos), temp_str, tft.GRAY, aSize = tiny_fontsize)
         
+#         utime.sleep(2)
         utime.sleep(60 * 60)
     
     
