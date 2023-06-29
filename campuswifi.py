@@ -1,5 +1,6 @@
 import requests
 import wifi
+import logger as log
 
 _ipaddr = ""
 _ssid = ""
@@ -24,7 +25,7 @@ def connect(ssid, password, userid, userpassword):
 
     ret = wifi.connect(_ssid, _password)
     if not ret:
-        print("Fail to connect to campus wifi!")
+        log.error("Fail to connect to campus wifi!")
         return False
     _ipaddr = wifi.ipaddr
     
@@ -32,23 +33,22 @@ def connect(ssid, password, userid, userpassword):
     if ret == True:
         return True
     
-    print("Logging into campus wifi·····")
+    log.info("Logging into campus wifi·····")
     ret = _login()
     if ret:
-        print("Login Success!")
+        log.info("Login Success!")
     else:
         return False
 
-    print("Submmitting·····")
+    log.info("Submmitting·····")
     ret = _submit()
     if ret:
-        print("Submit Success!")
+        log.info("Submit Success!")
     else:
         return False
 
-    print("Testing for the Internet·····")
-    wifi.ping()
-    
+#     log.info("Testing for the Internet·····")
+#     wifi.ping()
     return True
 
 def _login():
@@ -78,14 +78,14 @@ def _login():
     ret = 1
     rq = requests.request(method = "POST", url = login_url, headers=login_headers, data = login_data)
     if rq.status_code != 200:
-        print("In _login(): \n    login failed with status code {sc}, \n    headers:\n{hd} \n    text:\n{tx}".\
+        log.error("In _login(): \n    login failed with status code {sc}, \n    headers:\n{hd} \n    text:\n{tx}".\
               format(sc = rq.status_code, hd = rq.headers, tx = rq.text))
         ret = 0
   
     if "Set-Cookie" in rq.headers:
         _cookie_rn = rq.headers["Set-Cookie"]
     else :
-        print("Login Failed!\nNo cookie in headers! \n    headers:\n{hd}\n    text:\n{tx}".format(hd = rq.headers, tx = rq.text))
+        log.error("Login Failed!\nNo cookie in headers! \n    headers:\n{hd}\n    text:\n{tx}".format(hd = rq.headers, tx = rq.text))
         ret = 0
     rq.close()
     return ret
@@ -117,7 +117,7 @@ def _submit():
     ret = 1
     rq = requests.get(submit_url, headers = submit_headers, data = submit_data)
     if rq.status_code != 200:
-        print("In _submit(): \n    submit failed with status code {sc}, \n    headers:\n{hd} \n    text:\n{tx}".\
+        log.error("In _submit(): \n    submit failed with status code {sc}, \n    headers:\n{hd} \n    text:\n{tx}".\
               format(sc = rq.status_code, hd = rq.headers, tx = rq.text))
         ret = 0
     rq.close()
@@ -150,7 +150,7 @@ def _logout():
     ret = 1
     rq = requests.get(logout_url, headers = logout_headers, data = logout_data)
     if rq.status_code != 200:
-        print("In _logout(): \n    logout failed with status code {sc}, \n    headers:\n{hd} \n    text:\n{tx}".\
+        log.error("In _logout(): \n    logout failed with status code {sc}, \n    headers:\n{hd} \n    text:\n{tx}".\
               format(sc = rq.status_code, hd = rq.headers, tx = rq.text))
         ret = 0
     rq.close()

@@ -2,6 +2,7 @@ import network
 import requests
 import utime
 import campuswifi
+import logger as log
 import ure as re
 from machine import Pin, SoftSPI,SPI
 from ST7735 import TFT
@@ -9,11 +10,14 @@ from ST7735 import TFT
 def get_weather_info():
     
     weather_api = "https://api.seniverse.com/v3/weather/daily.json?key=S0KEla3YqL1xzFRwI&location=hefei&language=en&unit=c&start=-1&days=5"
-    
-    rq = requests.get(weather_api)
-    info = rq.content.decode()
-    rq.close()
-    
+    try:
+        rq = requests.get(weather_api)
+        info = rq.content.decode()
+        rq.close()
+        log.info("Get weather success.")
+    except:
+        log.error("Get weather failed.")
+        
     date_pattern = '"date":"(.*?)"'
     text_day_pattern = '"text_day":"(.*?)"'
     code_day_pattern = '"code_day":"(.*?)"'
@@ -62,111 +66,114 @@ def get_weather_info():
     humidity_start = humidity_pattern.find('(')
     last_update_start = last_update_pattern.find('(')
     
-    whos_turn = 0
-    for i in range(0, len(info)):
-        info_fromi = info[i:]
-        if whos_turn == 0:
-            ret = re.match(date_pattern, info_fromi)
-            if ret != None:
-                date.append(ret.group(0)[date_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 1:
-            ret = re.match(text_day_pattern, info_fromi)
-            if ret != None:
-                text_day.append(ret.group(0)[text_day_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 2:
-            ret = re.match(code_day_pattern, info_fromi)
-            if ret != None:
-                code_day.append(ret.group(0)[code_day_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 3:
-            ret = re.match(text_night_pattern, info_fromi)
-            if ret != None:
-                text_night.append(ret.group(0)[text_night_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 4:
-            ret = re.match(code_night_pattern, info_fromi)
-            if ret != None:
-                code_night.append(ret.group(0)[code_night_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 5:
-            ret = re.match(high_pattern, info_fromi)
-            if ret != None:
-                high.append(ret.group(0)[high_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 6:
-            ret = re.match(low_pattern, info_fromi)
-            if ret != None:
-                low.append(ret.group(0)[low_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 7:
-            ret = re.match(rainfall_pattern, info_fromi)
-            if ret != None:
-                rainfall.append(ret.group(0)[rainfall_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-        elif whos_turn == 8:
-            ret = re.match(precip_pattern, info_fromi)
-            if ret != None:
-                precip.append(ret.group(0)[precip_start : -1])
-                i += len(ret.group(0))
-                whos_turn += 1
-                continue
-#         if len(wind_direction) < day_index and day_index < 4:
-#             ret = re.match(wind_direction_pattern, info_fromi)
-#             if ret != None:
-#                 wind_direction.append(ret.group(0)[wind_direction_start : -1])
-#                 i += len(ret.group(0))
-#                 continue
-#         if len(wind_direction_degree) < day_index and day_index < 4:
-#             ret = re.match(wind_direction_degree_pattern, info_fromi)
-#             if ret != None:
-#                 wind_direction_degree.append(ret.group(0)[wind_direction_degree_start : -1])
-#                 i += len(ret.group(0))
-#                 continue
-#         if len(wind_speed) < day_index and day_index < 4:
-#             ret = re.match(wind_speed_pattern, info_fromi)
-#             if ret != None:
-#                 wind_speed.append(ret.group(0)[wind_speed_start : -1])
-#                 i += len(ret.group(0))
-#                 continue
-#         if len(wind_scale) < day_index and day_index < 4:
-#             ret = re.match(wind_scale_pattern, info_fromi)
-#             if ret != None:
-#                 wind_scale.append(ret.group(0)[wind_scale_start : -1])
-#                 i += len(ret.group(0))
-#                 continue
-        elif whos_turn == 9:
-            ret = re.match(humidity_pattern, info_fromi)
-            if ret != None:
-                humidity.append(ret.group(0)[humidity_start : -1])
-                i += len(ret.group(0))
-                whos_turn = 0
-                continue
-            
-#         if whos_turn == 0:
-#             ret = re.match(last_update_pattern, info_fromi)
-#             if ret != None:
-#                 last_update.append(ret.group(0)[last_update_start : -1])
-#                 i += len(ret.group(0))
-#                 break
-            
+    try:
+        whos_turn = 0
+        for i in range(0, len(info)):
+            info_fromi = info[i:]
+            if whos_turn == 0:
+                ret = re.match(date_pattern, info_fromi)
+                if ret != None:
+                    date.append(ret.group(0)[date_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 1:
+                ret = re.match(text_day_pattern, info_fromi)
+                if ret != None:
+                    text_day.append(ret.group(0)[text_day_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 2:
+                ret = re.match(code_day_pattern, info_fromi)
+                if ret != None:
+                    code_day.append(ret.group(0)[code_day_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 3:
+                ret = re.match(text_night_pattern, info_fromi)
+                if ret != None:
+                    text_night.append(ret.group(0)[text_night_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 4:
+                ret = re.match(code_night_pattern, info_fromi)
+                if ret != None:
+                    code_night.append(ret.group(0)[code_night_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 5:
+                ret = re.match(high_pattern, info_fromi)
+                if ret != None:
+                    high.append(ret.group(0)[high_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 6:
+                ret = re.match(low_pattern, info_fromi)
+                if ret != None:
+                    low.append(ret.group(0)[low_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 7:
+                ret = re.match(rainfall_pattern, info_fromi)
+                if ret != None:
+                    rainfall.append(ret.group(0)[rainfall_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+            elif whos_turn == 8:
+                ret = re.match(precip_pattern, info_fromi)
+                if ret != None:
+                    precip.append(ret.group(0)[precip_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn += 1
+                    continue
+    #         if len(wind_direction) < day_index and day_index < 4:
+    #             ret = re.match(wind_direction_pattern, info_fromi)
+    #             if ret != None:
+    #                 wind_direction.append(ret.group(0)[wind_direction_start : -1])
+    #                 i += len(ret.group(0))
+    #                 continue
+    #         if len(wind_direction_degree) < day_index and day_index < 4:
+    #             ret = re.match(wind_direction_degree_pattern, info_fromi)
+    #             if ret != None:
+    #                 wind_direction_degree.append(ret.group(0)[wind_direction_degree_start : -1])
+    #                 i += len(ret.group(0))
+    #                 continue
+    #         if len(wind_speed) < day_index and day_index < 4:
+    #             ret = re.match(wind_speed_pattern, info_fromi)
+    #             if ret != None:
+    #                 wind_speed.append(ret.group(0)[wind_speed_start : -1])
+    #                 i += len(ret.group(0))
+    #                 continue
+    #         if len(wind_scale) < day_index and day_index < 4:
+    #             ret = re.match(wind_scale_pattern, info_fromi)
+    #             if ret != None:
+    #                 wind_scale.append(ret.group(0)[wind_scale_start : -1])
+    #                 i += len(ret.group(0))
+    #                 continue
+            elif whos_turn == 9:
+                ret = re.match(humidity_pattern, info_fromi)
+                if ret != None:
+                    humidity.append(ret.group(0)[humidity_start : -1])
+                    i += len(ret.group(0))
+                    whos_turn = 0
+                    continue
+                
+    #         if whos_turn == 0:
+    #             ret = re.match(last_update_pattern, info_fromi)
+    #             if ret != None:
+    #                 last_update.append(ret.group(0)[last_update_start : -1])
+    #                 i += len(ret.group(0))
+    #                 break
+    except:
+        log.error("Handle weather info failed.")
+        
     return {\
         "date": date, \
         "text_day": text_day, \
@@ -186,22 +193,9 @@ def get_weather_info():
     }
 
 def getcurrenttime():
-    time_api = "http://quan.suning.com/getSysTime.do"
-    
-    rq = requests.get(time_api)
-    info = rq.content.decode()
-    rq.close()
-    
-    systime_pattern = '"sysTime2":"(.*?)"'
-    systime = ''
-    systime_start = systime_pattern.find('(')
-    for i in range(0, len(info)):
-        info_fromi = info[i:]
-        ret = re.match(systime_pattern, info_fromi)
-        if ret != None:
-            systime = ret.group(0)[systime_start : -1]
-            break
-    return systime
+    y, m, d, h, mn, s, _, _ = utime.localtime()
+    timestr = "%04d-%02d-%02d %02d:%02d:%02d" % (y, m, d, h, mn, s)
+    return timestr
 
 tft = None
 
@@ -211,8 +205,11 @@ def init():
     user_name = "bonjour866"
     user_password = "Nea@313818"
 
-    campuswifi.connect(ssid, password, user_name, user_password)
-    
+    try:
+        campuswifi.connect(ssid, password, user_name, user_password)
+    except:
+        log.error("Connect to campuswifi failed.")
+        
     spi = SoftSPI(baudrate=800000, polarity=1, phase=0, sck=Pin(2), mosi=Pin(3), miso=Pin(10))
     global tft
     tft = TFT(spi,6,10,7) #DC, Reset, CS
@@ -226,9 +223,10 @@ if __name__ == "__main__":
     init()
     
     while True:
-        tft.fill(tft.BLACK)
         weather_info = get_weather_info()
         systime = getcurrenttime()
+        
+        tft.fill(tft.BLACK)
         
         xpos = 70
         ypos = 0
