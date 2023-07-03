@@ -243,8 +243,8 @@ tft = None
 def init():
     ssid = "ustcnet"
     password =  ""
-    user_name = "bonjour866"
-    user_password = "Nea@313818"
+    user_name = "username"
+    user_password = "password"
 
     try:
         campuswifi.connect(ssid, password, user_name, user_password)
